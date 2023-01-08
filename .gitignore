@@ -1,0 +1,6 @@
+/.vscode
+/flaskenv
+/password
+/temp.json
+
+*__pycache__*
