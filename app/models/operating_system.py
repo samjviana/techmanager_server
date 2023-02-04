@@ -1,6 +1,8 @@
 import json
 from app.db import db
 from app.models.base_model import BaseModel
+import uuid
+import datetime
 
 class OperatingSystem(BaseModel):
     name = db.Column(db.String(255))
@@ -24,13 +26,13 @@ class OperatingSystem(BaseModel):
     def from_json(cls, json_data):
         operating_system = cls()
 
-        if json_data.get('id'):
+        if json_data.get('id') != None:
             operating_system.id = json_data.get('id')
-        if json_data.get('uuid'):
+        if json_data.get('uuid') != None:
             operating_system.uuid = json_data.get('uuid')
-        if json_data.get('added'):
+        if json_data.get('added') != None:
             operating_system.added = json_data.get('added')
-        if json_data.get('updated'):
+        if json_data.get('updated') != None:
             operating_system.updated = json_data.get('updated')
 
         operating_system.name = json_data.get('name')
@@ -73,3 +75,27 @@ class OperatingSystem(BaseModel):
             'system_path': self.system_path,
             'install_path': self.install_path
         }
+        
+    def setToAdd(self):
+        self.id = None
+        self.uuid = str(uuid.uuid4())
+        self.added = datetime.datetime.now()
+        self.updated = datetime.datetime.now()
+
+    def update(self, old_operating_system, new_operating_system):
+        old_operating_system.updated = datetime.datetime.now()
+        old_operating_system.name = new_operating_system.name
+        old_operating_system.version = new_operating_system.version
+        old_operating_system.build = new_operating_system.build
+        old_operating_system.manufacturer = new_operating_system.manufacturer
+        old_operating_system.architecture = new_operating_system.architecture
+        old_operating_system.serial_key = new_operating_system.serial_key
+        old_operating_system.serial_number = new_operating_system.serial_number
+        old_operating_system.status = new_operating_system.status
+        old_operating_system.install_date = new_operating_system.install_date
+        old_operating_system.language = new_operating_system.language
+        old_operating_system.country = new_operating_system.country
+        old_operating_system.code_page = new_operating_system.code_page
+        old_operating_system.boot_device = new_operating_system.boot_device
+        old_operating_system.system_path = new_operating_system.system_path
+        old_operating_system.install_path = new_operating_system.install_path

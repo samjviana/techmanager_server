@@ -1,3 +1,4 @@
+import datetime
 import json
 import uuid
 
@@ -11,6 +12,8 @@ from app.models.storage import Storage
 from app.db import db
 from app.models.base_model import BaseModel
 from sqlalchemy.dialects.postgresql import ARRAY
+import uuid
+from app.models.reading import Reading
 
 class Computer(BaseModel):
     name = db.Column(db.String(255), nullable=False)
@@ -43,13 +46,13 @@ class Computer(BaseModel):
     def from_json(cls, json_data):
         computer = cls()
 
-        if json_data.get('id'):
+        if json_data.get('id') != None:
             computer.id = json_data.get('id')
-        if json_data.get('uuid'):
+        if json_data.get('uuid') != None:
             computer.uuid = json_data.get('uuid')
-        if json_data.get('added'):
+        if json_data.get('added') != None:
             computer.added = json_data.get('added')
-        if json_data.get('updated'):
+        if json_data.get('updated') != None:
             computer.updated = json_data.get('updated')
 
         computer.name = json_data.get('name')
@@ -124,3 +127,84 @@ class Computer(BaseModel):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+    def update(self, old_computer, new_computer):
+        new_computer = Computer.from_json(new_computer)
+        
+        old_computer.name = new_computer.name
+        old_computer.part_of_domain = new_computer.part_of_domain
+        old_computer.domain = new_computer.domain
+        old_computer.work_group = new_computer.work_group
+        old_computer.dns_name = new_computer.dns_name
+        old_computer.domain_role = new_computer.domain_role
+        old_computer.current_user = new_computer.current_user
+        old_computer.computer_type = new_computer.computer_type
+        old_computer.manufacturer = new_computer.manufacturer
+        old_computer.model = new_computer.model
+        old_computer.power_state = new_computer.power_state
+        old_computer.owner_contact = new_computer.owner_contact
+        old_computer.owner_name = new_computer.owner_name
+        old_computer.support_contact = new_computer.support_contact
+        old_computer.system_type = new_computer.system_type
+        old_computer.thermal_state = new_computer.thermal_state
+        old_computer.status = new_computer.status
+        old_computer.sensors = new_computer.sensors
+        old_computer.installed_softwares = new_computer.installed_softwares
+        old_computer.updated = datetime.datetime.now()
+
+        for i in range(len(old_computer.storages)):
+            old_computer.storages[i].update(old_computer.storages[i], new_computer.storages[i])
+        old_computer.ram.update(old_computer.ram, new_computer.ram)
+        for i in range(len(old_computer.processors)):
+            old_computer.processors[i].update(old_computer.processors[i], new_computer.processors[i])
+        for i in range(len(old_computer.gpus)):
+            old_computer.gpus[i].update(old_computer.gpus[i], new_computer.gpus[i])
+        old_computer.motherboard.update(old_computer.motherboard, new_computer.motherboard)
+        old_computer.operating_system.update(old_computer.operating_system, new_computer.operating_system)
+
+        db.session.commit()
+
+    def setToAdd(self):
+        self.id = None
+        self.uuid = str(uuid.uuid4())
+        self.added = datetime.datetime.now()
+        self.updated = datetime.datetime.now()
+
+        for storage in self.storages:
+            storage.setToAdd()
+        self.ram.setToAdd()
+        for processor in self.processors:
+            processor.setToAdd()
+        for gpu in self.gpus:
+            gpu.setToAdd()
+        self.motherboard.setToAdd()
+        self.operating_system.setToAdd()
+        
+    def save_reading(self):
+        reading = Reading()
+        reading.setToAdd()
+        reading.computer_uuid = self.uuid
+        
+        storage_readings = []
+        for storage in self.storages:
+            storage_sensors = storage.sensors
+            storage_sensors['uuid'] = storage.uuid
+            storage_readings.append(storage_sensors)
+        reading.storages = json.dumps(storage_readings)
+
+        reading.ram = json.dumps(self.ram.sensors)
+
+        processor_readings = []
+        for processor in self.processors:
+            processor.sensors['uuid'] = processor.uuid
+            processor.sensors['added'] = processor.added.isoformat()
+            processor_readings.append(processor.sensors)
+        reading.processors = json.dumps(processor_readings)
+
+        gpu_readings = []
+        for gpu in self.gpus:
+            gpu_readings.append(gpu.sensors)
+        reading.gpus = json.dumps(gpu_readings)
+
+        reading.save()
+        

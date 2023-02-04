@@ -5,10 +5,11 @@ from flask_restx import Api, Resource, reqparse
 
 from app.models.computer import Computer
 import app.password_manager as password_manager
+from flask_cors import CORS
 from app.db import db
 
-app = Flask(__name__)
-
+app = Flask(__name__    )
+CORS(app)
 api = Api(app)
 
 app.config.update(DEBUG=True)
@@ -29,9 +30,10 @@ with app.app_context():
     db.create_all()
 
 api.add_namespace(routes.computer.api, path='/computer')
+api.add_namespace(routes.reading.api, path='/reading')
         
 api.init_app(routes.bp)
 app.register_blueprint(routes.bp)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0" ,port=9000)
