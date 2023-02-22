@@ -7,6 +7,7 @@ from app.models.computer import Computer
 import app.password_manager as password_manager
 from flask_cors import CORS
 from app.db import db
+from app.server.manager import ServerManager
 
 app = Flask(__name__    )
 CORS(app)
@@ -35,5 +36,12 @@ api.add_namespace(routes.reading.api, path='/reading')
 api.init_app(routes.bp)
 app.register_blueprint(routes.bp)
 
+server_manager = ServerManager(app)
+
 if __name__ == '__main__':
+    server_manager.start()
+
     app.run(host="0.0.0.0" ,port=9000)
+
+    server_manager.stop()
+    

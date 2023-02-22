@@ -125,6 +125,7 @@ class Computer(BaseModel):
         }
 
     def save(self):
+        self.status = True
         db.session.add(self)
         db.session.commit()
 
@@ -151,6 +152,7 @@ class Computer(BaseModel):
         old_computer.sensors = new_computer.sensors
         old_computer.installed_softwares = new_computer.installed_softwares
         old_computer.updated = datetime.datetime.now()
+        old_computer.status = True
 
         for i in range(len(old_computer.storages)):
             old_computer.storages[i].update(old_computer.storages[i], new_computer.storages[i])
